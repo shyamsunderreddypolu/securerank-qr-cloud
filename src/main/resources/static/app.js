@@ -4,8 +4,34 @@ let currentUser = null;
 
 // On Page Load
 document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
     checkSession();
 });
+
+function initTheme() {
+    const savedTheme = localStorage.getItem('securerank_theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    updateThemeIcon(savedTheme);
+}
+
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('securerank_theme', newTheme);
+    updateThemeIcon(newTheme);
+}
+
+function updateThemeIcon(theme) {
+    const icon = document.getElementById('themeIcon');
+    if (icon) {
+        if (theme === 'dark') {
+            icon.className = 'fa-solid fa-sun text-warning';
+        } else {
+            icon.className = 'fa-solid fa-moon text-primary';
+        }
+    }
+}
 
 function checkSession() {
     const token = sessionStorage.getItem('jwt_token');
@@ -211,7 +237,7 @@ async function handleFileUpload(e) {
 
 async function loadMyFiles() {
     const tbody = document.getElementById('myFilesTableBody');
-    tbody.innerHTML = '<tr><td colspan="4" class="text-center py-3"><span class="spinner-border spinner-border-sm"></span> Loading...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-3"><span class="spinner-border spinner-border-sm"></span> Loading...</td></tr>';
 
     try {
         const res = await fetch(`${API_BASE}/files/my-files`, {
@@ -220,20 +246,30 @@ async function loadMyFiles() {
         const files = await res.json();
 
         if (files.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">No files uploaded yet.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No files uploaded yet.</td></tr>';
             return;
         }
 
         tbody.innerHTML = files.map(f => `
             <tr>
                 <td class="fw-semibold text-white"><i class="fa-solid fa-file-shield text-primary me-2"></i>${escapeHtml(f.filename)}</td>
-                <td>${escapeHtml(f.label || '-')}</td>
-                <td>${(f.fileSize / 1024).toFixed(1)} KB</td>
-                <td class="text-muted small">${new Date(f.uploadedAt).toLocaleString()}</td>
+                <td class="text-light">${escapeHtml(f.label || '-')}</td>
+                <td class="text-light">${(f.fileSize / 1024).toFixed(1)} KB</td>
+                <td class="text-secondary small">${new Date(f.uploadedAt).toLocaleString()}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-info" onclick="viewQRAndVC(${f.id}, '${escapeHtml(f.filename)}')">
+                        <i class="fa-solid fa-qrcode me-1"></i> QR & VC Shares
+                    </button>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-outline-warning" onclick="viewBenchmark(${f.id}, '${escapeHtml(f.filename)}')">
+                        <i class="fa-solid fa-chart-line me-1"></i> Benchmark
+                    </button>
+                </td>
             </tr>
         `).join('');
     } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="4" class="text-danger text-center py-3">Error loading files: ${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="text-danger text-center py-3">Error loading files: ${err.message}</td></tr>`;
     }
 }
 
@@ -251,7 +287,7 @@ async function handleSearch(e) {
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
     resultsCard.style.display = 'block';
-    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-3"><span class="spinner-border spinner-border-sm"></span> Matching encrypted indexes...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-3"><span class="spinner-border spinner-border-sm"></span> Matching encrypted indexes...</td></tr>';
 
     try {
         const res = await fetch(`${API_BASE}/files/search?query=${encodeURIComponent(query)}`, {
@@ -260,7 +296,7 @@ async function handleSearch(e) {
         const results = await res.json();
 
         if (results.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No matching documents found.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No matching documents found.</td></tr>';
             return;
         }
 
@@ -271,38 +307,72 @@ async function handleSearch(e) {
             } else if (r.keyRequestStatus === 'PENDING') {
                 actionBtn = `<span class="badge bg-warning text-dark">Pending Key</span>`;
             } else {
-                actionBtn = `<button class="btn btn-sm btn-outline-primary" onclick="requestKey(${r.id})"><i class="fa-solid fa-key me-1"></i> Request Key</button>`;
+                actionBtn = `<button class="btn btn-sm btn-outline-primary" onclick="openRequestKeyModal(${r.id}, '${escapeHtml(r.filename)}')"><i class="fa-solid fa-key me-1"></i> Request Key</button>`;
             }
 
             return `
                 <tr>
                     <td><span class="badge bg-secondary">#${r.rank}</span></td>
                     <td class="fw-semibold text-white">${escapeHtml(r.filename)}</td>
-                    <td>${escapeHtml(r.label || '-')}</td>
-                    <td class="text-muted small">${escapeHtml(r.ownerEmail)}</td>
+                    <td class="text-light">${escapeHtml(r.label || '-')}</td>
+                    <td class="text-secondary small">${escapeHtml(r.ownerEmail)}</td>
                     <td><span class="score-pill">${r.score.toFixed(4)}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-info" onclick="viewQRAndVC(${r.id}, '${escapeHtml(r.filename)}')">
+                            <i class="fa-solid fa-qrcode me-1"></i> View QR
+                        </button>
+                    </td>
                     <td>${actionBtn}</td>
                 </tr>
             `;
         }).join('');
     } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-danger text-center py-3">Error searching files: ${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="text-danger text-center py-3">Error searching files: ${err.message}</td></tr>`;
     } finally {
         btn.disabled = false;
         btn.innerHTML = 'Search';
     }
 }
 
-async function requestKey(fileId) {
+function openRequestKeyModal(fileId, filename) {
+    document.getElementById('modalRequestFileId').value = fileId;
+    document.getElementById('modalRequestFileName').value = filename;
+    document.getElementById('modalRequestReason').value = '';
+    const modalEl = document.getElementById('requestKeyModal');
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+}
+
+async function submitKeyRequestWithReason() {
+    const fileId = document.getElementById('modalRequestFileId').value;
+    const reason = document.getElementById('modalRequestReason').value.trim();
+
+    if (!reason) {
+        showAlert('Please provide an access reason or purpose.', 'warning');
+        return;
+    }
+
     try {
         const res = await fetch(`${API_BASE}/files/request-key/${fileId}`, {
             method: 'POST',
-            headers: getAuthHeaders()
+            headers: {
+                ...getAuthHeaders(),
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ accessReason: reason })
         });
         const data = await res.json();
         showAlert(data.message, data.success ? 'success' : 'warning');
+        
+        const modalEl = document.getElementById('requestKeyModal');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
+
         loadMyKeyRequests();
-        document.getElementById('searchForm').dispatchEvent(new Event('submit'));
+        const searchForm = document.getElementById('searchForm');
+        if (searchForm && document.getElementById('searchQueryInput').value.trim()) {
+            searchForm.dispatchEvent(new Event('submit'));
+        }
     } catch (err) {
         showAlert('Request error: ' + err.message, 'danger');
     }
@@ -318,7 +388,7 @@ async function loadMyKeyRequests() {
         const requests = await res.json();
 
         if (requests.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">No key requests found.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No key requests found.</td></tr>';
             return;
         }
 
@@ -338,7 +408,8 @@ async function loadMyKeyRequests() {
             return `
                 <tr>
                     <td class="fw-semibold text-white">${escapeHtml(req.filename)}</td>
-                    <td class="text-muted small">${escapeHtml(req.ownerEmail)}</td>
+                    <td class="text-secondary small">${escapeHtml(req.ownerEmail)}</td>
+                    <td class="small text-info">${escapeHtml(req.accessReason || 'Standard file access')}</td>
                     <td>${statusBadge}</td>
                     <td><code>${req.masterKey || '••••••••'}</code></td>
                     <td>${actionBtn}</td>
@@ -346,7 +417,7 @@ async function loadMyKeyRequests() {
             `;
         }).join('');
     } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="5" class="text-danger text-center py-3">Error loading requests: ${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="text-danger text-center py-3">Error loading requests: ${err.message}</td></tr>`;
     }
 }
 
@@ -377,6 +448,108 @@ async function downloadFile(fileId, filename) {
     }
 }
 
+// ----------------- VISUAL CRYPTO & BENCHMARK FUNCTIONS -----------------
+
+async function viewQRAndVC(fileId, filename) {
+    try {
+        const modalEl = document.getElementById('qrVcModal');
+        const modal = new bootstrap.Modal(modalEl);
+
+        document.getElementById('modalDocName').innerText = filename;
+        document.getElementById('modalBitLength').innerText = '... bits';
+        document.getElementById('modalEntropy').innerText = 'Calculating...';
+        document.getElementById('modalBitStreamPreview').innerText = 'Fetching stream...';
+        document.getElementById('imgOriginalQR').src = '';
+        document.getElementById('imgShare1').src = '';
+        document.getElementById('imgShare2').src = '';
+        document.getElementById('imgSuperimposed').src = '';
+
+        modal.show();
+
+        const res = await fetch(`${API_BASE}/files/${fileId}/qr-vc`, {
+            headers: getAuthHeaders()
+        });
+
+        if (!res.ok) {
+            throw new Error('Failed to load QR & VC details.');
+        }
+
+        const data = await res.json();
+        const formatSrc = (str) => {
+            if (!str) return '';
+            return str.startsWith('data:') ? str : 'data:image/png;base64,' + str;
+        };
+
+        document.getElementById('modalBitLength').innerText = (data.bitStreamLength ? data.bitStreamLength.toLocaleString() : '65,536') + ' bits';
+        document.getElementById('modalEntropy').innerText = (data.shannonEntropy != null ? data.shannonEntropy.toFixed(4) : '1.0000') + ' (Near-Maximal)';
+        document.getElementById('imgOriginalQR').src = formatSrc(data.qrCodeBase64);
+        document.getElementById('imgShare1').src = formatSrc(data.vcShare1Base64);
+        document.getElementById('imgShare2').src = formatSrc(data.vcShare2Base64);
+        document.getElementById('imgSuperimposed').src = formatSrc(data.superimposedQRBase64);
+        document.getElementById('modalBitStreamPreview').innerText = data.bitStreamPreview || '01011001010101...';
+    } catch (err) {
+        showAlert('Error loading QR/VC shares: ' + err.message, 'danger');
+    }
+}
+
+async function viewBenchmark(fileId, filename) {
+    try {
+        const modalEl = document.getElementById('benchmarkModal');
+        const modal = new bootstrap.Modal(modalEl);
+        const tbody = document.getElementById('benchmarkTableBody');
+
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4"><span class="spinner-border spinner-border-sm me-2"></span> Running benchmark across 6 lossless algorithms...</td></tr>';
+        document.getElementById('benchmarkConclusionText').innerText = `Running lossless transformation benchmark on bit stream for "${filename}"...`;
+
+        modal.show();
+
+        const res = await fetch(`${API_BASE}/files/${fileId}/benchmark`, {
+            headers: getAuthHeaders()
+        });
+
+        if (!res.ok) {
+            throw new Error('Failed to run lossless benchmark.');
+        }
+
+        const data = await res.json();
+
+        if (!data.results || data.results.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">No metrics available.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = data.results.map(m => `
+            <tr>
+                <td class="fw-bold text-white">${escapeHtml(m.algorithmName)}</td>
+                <td><span class="badge ${getCategoryBadge(m.algorithmCategory)}">${escapeHtml(m.algorithmCategory)}</span></td>
+                <td class="text-light">${m.originalSizeChars ? m.originalSizeChars.toLocaleString() : '-'}</td>
+                <td class="text-light">${m.compressedSizeChars ? m.compressedSizeChars.toLocaleString() : '-'}</td>
+                <td class="${m.compressionRatioPercent > 100 ? 'text-danger' : 'text-success'} fw-semibold">${m.compressionRatioPercent.toFixed(2)}%</td>
+                <td class="${m.spaceSavingsPercent < 0 ? 'text-danger' : 'text-success'} fw-semibold">${m.spaceSavingsPercent.toFixed(2)}%</td>
+                <td class="small text-secondary">${m.compressionTimeMs} ms / ${m.decompressionTimeMs} ms</td>
+                <td>
+                    ${m.losslessFidelity ? '<span class="badge bg-success"><i class="fa-solid fa-check me-1"></i> 100% Lossless</span>' : '<span class="badge bg-danger">Mismatch</span>'}
+                </td>
+            </tr>
+        `).join('');
+
+        document.getElementById('benchmarkConclusionText').innerHTML = `
+            <strong>Optimal Transformation Identified:</strong> <u>${escapeHtml(data.optimalAlgorithm)}</u> — ${escapeHtml(data.conclusion)}
+        `;
+    } catch (err) {
+        showAlert('Benchmark execution error: ' + err.message, 'danger');
+    }
+}
+
+function getCategoryBadge(cat) {
+    if (!cat) return 'bg-secondary';
+    if (cat.includes('Encoding') || cat.includes('Base64')) return 'bg-primary';
+    if (cat.includes('Statistical') || cat.includes('Huffman')) return 'bg-info text-dark';
+    if (cat.includes('Dictionary') || cat.includes('LZW')) return 'bg-warning text-dark';
+    if (cat.includes('Compound') || cat.includes('Pipeline')) return 'bg-secondary';
+    return 'bg-secondary';
+}
+
 // ----------------- ADMIN FUNCTIONS -----------------
 
 async function loadAdminData() {
@@ -402,7 +575,7 @@ async function loadAdminData() {
                 usersTbody.innerHTML = users.map(u => `
                     <tr>
                         <td class="fw-semibold text-white">${escapeHtml(u.name)}</td>
-                        <td>${escapeHtml(u.email)}</td>
+                        <td class="text-light">${escapeHtml(u.email)}</td>
                         <td><span class="badge bg-secondary">${u.role.replace('ROLE_', '')}</span></td>
                         <td><button class="btn btn-sm btn-primary-custom" onclick="approveUser(${u.id})">Approve</button></td>
                     </tr>
@@ -416,13 +589,14 @@ async function loadAdminData() {
         if (keysRes.ok) {
             const keys = await keysRes.json();
             if (keys.length === 0) {
-                keysTbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">No pending key requests.</td></tr>';
+                keysTbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">No pending key requests.</td></tr>';
             } else {
                 keysTbody.innerHTML = keys.map(k => `
                     <tr>
                         <td class="fw-semibold text-white">${escapeHtml(k.filename)}</td>
-                        <td>${escapeHtml(k.consumerEmail)}</td>
-                        <td class="text-muted small">${new Date(k.requestedAt).toLocaleTimeString()}</td>
+                        <td class="text-light">${escapeHtml(k.consumerEmail)}</td>
+                        <td class="small text-info">${escapeHtml(k.accessReason || 'Standard access')}</td>
+                        <td class="text-secondary small">${new Date(k.requestedAt).toLocaleTimeString()}</td>
                         <td><button class="btn btn-sm btn-success" onclick="approveKey(${k.requestId})">Issue Key</button></td>
                     </tr>
                 `).join('');

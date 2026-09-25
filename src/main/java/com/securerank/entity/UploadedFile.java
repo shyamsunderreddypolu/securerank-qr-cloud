@@ -43,6 +43,24 @@ public class UploadedFile {
 
     private String trapdoorKey;
 
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
+    private String qrCodeBase64;
+
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
+    private String vcShare1Base64;
+
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
+    private String vcShare2Base64;
+
+    private Integer bitStreamLength;
+
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
+    private String binaryBitStream;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id", nullable = false)
     private User owner;

@@ -69,6 +69,7 @@ public class AdminServiceImpl implements AdminService {
                         .consumerName(req.getConsumer().getName())
                         .consumerEmail(req.getConsumer().getEmail())
                         .status(req.getStatus())
+                        .accessReason(req.getAccessReason())
                         .requestedAt(req.getRequestedAt())
                         .build())
                 .collect(Collectors.toList());

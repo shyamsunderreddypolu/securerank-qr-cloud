@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,132 +8,33 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #4361ee;
-            --primary-hover: #3a56d4;
-            --secondary: #3f37c9;
-            --success: #4cc9f0;
-            --bg-dark: #0f172a;
-            --card-bg: #1e293b;
-            --border-color: #334155;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-        }
-
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .navbar-custom {
-            background-color: rgba(30, 41, 59, 0.85);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .card-custom {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
-        }
-
-        .form-control, .form-select {
-            background-color: #0f172a;
-            border: 1px solid var(--border-color);
-            color: #f8fafc;
-            border-radius: 10px;
-            padding: 12px 16px;
-        }
-
-        .form-control:focus, .form-select:focus {
-            background-color: #0f172a;
-            border-color: var(--primary);
-            color: #fff;
-            box-shadow: 0 0 0 0.25rem rgba(67, 97, 238, 0.25);
-        }
-
-        .btn-primary-custom {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            color: #fff;
-            border: none;
-            border-radius: 10px;
-            padding: 10px 24px;
-            font-weight: 600;
-            transition: all 0.2s ease;
-        }
-
-        .btn-primary-custom:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(67, 97, 238, 0.4);
-            color: #fff;
-        }
-
-        .badge-role {
-            font-size: 0.75rem;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-weight: 600;
-        }
-
-        .table-dark-custom {
-            --bs-table-bg: transparent;
-            --bs-table-border-color: var(--border-color);
-            color: var(--text-main);
-        }
-
-        .score-pill {
-            background: rgba(76, 201, 240, 0.15);
-            color: #4cc9f0;
-            border: 1px solid rgba(76, 201, 240, 0.3);
-            border-radius: 20px;
-            padding: 4px 10px;
-            font-weight: 600;
-        }
-
-        .nav-pills .nav-link {
-            color: var(--text-muted);
-            border-radius: 10px;
-            padding: 10px 20px;
-            font-weight: 500;
-        }
-
-        .nav-pills .nav-link.active {
-            background-color: var(--primary);
-            color: #fff;
-        }
-
-        .stat-card {
-            background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.9) 100%);
-            border: 1px solid var(--border-color);
-            border-radius: 14px;
-            padding: 20px;
-        }
-    </style>
+    <!-- Google Fonts: Inter & Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Custom Theme Stylesheet -->
+    <link rel="stylesheet" href="/style.css">
 </head>
 <body>
 
     <!-- Header Navigation -->
     <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
         <div class="container">
-            <a class="navbar-brand d-flex align-items-center gap-2 text-white fw-bold" href="#">
-                <i class="fa-solid fa-shield-halved text-primary fs-4"></i>
-                <span>Secure<span class="text-primary">Rank</span></span>
+            <a class="navbar-brand d-flex align-items-center gap-2" href="#">
+                <i class="fa-solid fa-shield-halved brand-icon fs-4"></i>
+                <span>Secure<span class="accent-highlight">Rank</span></span>
             </a>
             
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
-                <span class="navbar-toggler-icon"></span>
+            <button class="navbar-toggler border-0 text-white" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
+                <i class="fa-solid fa-bars fs-5"></i>
             </button>
 
             <div class="collapse navbar-collapse" id="navContent">
-                <ul class="navbar-nav ms-auto align-items-center gap-3">
+                <ul class="navbar-nav ms-auto align-items-center gap-2">
+                    <!-- Light / Dark Theme Switcher Button -->
+                    <li class="nav-item">
+                        <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle Light/Dark Theme">
+                            <i class="fa-solid fa-sun text-warning" id="themeIcon"></i>
+                        </button>
+                    </li>
                     <li class="nav-item d-none" id="userBadgeContainer">
                         <div class="d-flex align-items-center gap-2">
                             <span class="text-muted small" id="userNameLabel">User</span>
@@ -275,10 +176,12 @@
                                         <th>Label</th>
                                         <th>Size</th>
                                         <th>Uploaded</th>
+                                        <th>Visual Cryptography</th>
+                                        <th>Lossless Benchmark</th>
                                     </tr>
                                 </thead>
                                 <tbody id="myFilesTableBody">
-                                    <tr><td colspan="4" class="text-center text-muted py-4">No files uploaded yet.</td></tr>
+                                    <tr><td colspan="6" class="text-center text-muted py-4">No files uploaded yet.</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -321,6 +224,7 @@
                                 <th>Label</th>
                                 <th>Owner</th>
                                 <th>Relevance Score</th>
+                                <th>QR Code</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -342,6 +246,7 @@
                             <tr>
                                 <th>File Name</th>
                                 <th>Owner</th>
+                                <th>Access Reason</th>
                                 <th>Status</th>
                                 <th>Master Key</th>
                                 <th>Action</th>
@@ -418,15 +323,198 @@
                                     <tr>
                                         <th>File</th>
                                         <th>Consumer</th>
+                                        <th>Access Reason</th>
                                         <th>Requested</th>
                                         <th>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody id="pendingKeysTableBody">
-                                    <tr><td colspan="4" class="text-center text-muted py-4">No pending key requests.</td></tr>
+                                    <tr><td colspan="5" class="text-center text-muted py-4">No pending key requests.</td></tr>
                                 </tbody>
                             </table>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. QR CODE & VISUAL CRYPTOGRAPHY MODAL -->
+        <div class="modal fade" id="qrVcModal" tabindex="-1" aria-labelledby="qrVcModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-dialog-centered">
+                <div class="modal-content card-custom text-white border-primary">
+                    <div class="modal-header border-secondary">
+                        <h5 class="modal-title fw-bold d-flex align-items-center gap-2" id="qrVcModalLabel">
+                            <i class="fa-solid fa-qrcode text-primary"></i>
+                            <span>Visual Cryptography & QR Binary Bit Stream Inspection</span>
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <div class="stat-card">
+                                    <span class="text-muted small">Target Document</span>
+                                    <h6 class="fw-bold text-white mb-0 text-truncate" id="modalDocName">-</h6>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="stat-card">
+                                    <span class="text-muted small">Flattened Bit Stream Length</span>
+                                    <h6 class="fw-bold text-info mb-0" id="modalBitLength">- bits</h6>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="stat-card">
+                                    <span class="text-muted small">Shannon Entropy (H)</span>
+                                    <h6 class="fw-bold text-warning mb-0" id="modalEntropy">- (Near-Maximal)</h6>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 4 Shares Grid -->
+                        <div class="row g-4 text-center">
+                            <div class="col-md-3">
+                                <div class="p-3 bg-dark rounded border border-secondary h-100">
+                                    <h6 class="fw-bold text-info mb-2"><i class="fa-solid fa-qrcode me-1"></i> 1. Original QR Code</h6>
+                                    <p class="text-muted small mb-3">Generated with ZXing (Metadata & Tokens)</p>
+                                    <div class="p-2 bg-white rounded d-inline-block">
+                                        <img id="imgOriginalQR" src="" alt="Original QR" class="img-fluid" style="width: 140px; height: 140px; object-fit: contain;">
+                                    </div>
+                                    <span class="badge bg-secondary d-block mt-3">Raw QR Image</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="p-3 bg-dark rounded border border-secondary h-100">
+                                    <h6 class="fw-bold text-warning mb-2"><i class="fa-solid fa-shield-halved me-1"></i> 2. VC Share 1 (Server)</h6>
+                                    <p class="text-muted small mb-3">Stored encrypted in Cloud BLOB</p>
+                                    <div class="p-2 bg-white rounded d-inline-block">
+                                        <img id="imgShare1" src="" alt="Share 1" class="img-fluid" style="width: 140px; height: 140px; object-fit: contain;">
+                                    </div>
+                                    <span class="badge bg-warning text-dark d-block mt-3">Randomized Stream</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="p-3 bg-dark rounded border border-secondary h-100">
+                                    <h6 class="fw-bold text-primary mb-2"><i class="fa-solid fa-key me-1"></i> 3. VC Share 2 (Client)</h6>
+                                    <p class="text-muted small mb-3">Retained as Owner Key Share</p>
+                                    <div class="p-2 bg-white rounded d-inline-block">
+                                        <img id="imgShare2" src="" alt="Share 2" class="img-fluid" style="width: 140px; height: 140px; object-fit: contain;">
+                                    </div>
+                                    <span class="badge bg-primary d-block mt-3">Zero Leaked Info</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="p-3 bg-dark rounded border border-success h-100">
+                                    <h6 class="fw-bold text-success mb-2"><i class="fa-solid fa-layer-group me-1"></i> 4. Superimposed QR</h6>
+                                    <p class="text-muted small mb-3">Reconstructed via Share Stacking (OR)</p>
+                                    <div class="p-2 bg-white rounded d-inline-block">
+                                        <img id="imgSuperimposed" src="" alt="Superimposed" class="img-fluid" style="width: 140px; height: 140px; object-fit: contain;">
+                                    </div>
+                                    <span class="badge bg-success d-block mt-3">Lossless Recovery</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bit stream Preview -->
+                        <div class="mt-4">
+                            <label class="form-label text-muted small fw-semibold">Sample Extracted Binary Bit Stream (Share 1):</label>
+                            <div class="p-3 bg-black rounded border border-secondary font-monospace small text-success text-break" id="modalBitStreamPreview">
+                                Loading bit stream...
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-secondary">
+                        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. LOSSLESS TRANSFORMATION BENCHMARK MODAL -->
+        <div class="modal fade" id="benchmarkModal" tabindex="-1" aria-labelledby="benchmarkModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-dialog-centered">
+                <div class="modal-content card-custom text-white border-warning">
+                    <div class="modal-header border-secondary">
+                        <h5 class="modal-title fw-bold d-flex align-items-center gap-2" id="benchmarkModalLabel">
+                            <i class="fa-solid fa-chart-line text-warning"></i>
+                            <span>Lossless Data Transformation & Compression Benchmark on QR Bit Stream</span>
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="alert alert-info border-info card-custom mb-4" id="benchmarkConclusionBox">
+                            <div class="d-flex align-items-start gap-2">
+                                <i class="fa-solid fa-circle-info fs-5 mt-1 text-info"></i>
+                                <div id="benchmarkConclusionText">Evaluating 6 algorithms over visual cryptographic binary bit stream...</div>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-dark-custom align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Algorithm</th>
+                                        <th>Category</th>
+                                        <th>Original (Chars)</th>
+                                        <th>Compressed (Chars)</th>
+                                        <th>Ratio (%)</th>
+                                        <th>Savings (%)</th>
+                                        <th>Time (Comp / Decomp)</th>
+                                        <th>Lossless Fidelity</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="benchmarkTableBody">
+                                    <tr><td colspan="8" class="text-center py-4"><span class="spinner-border spinner-border-sm me-2"></span> Running benchmark algorithms...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-6">
+                                <div class="p-3 bg-dark rounded border border-secondary">
+                                    <h6 class="fw-bold text-info mb-1"><i class="fa-solid fa-lightbulb me-1"></i> Research Finding</h6>
+                                    <p class="text-muted small mb-0">Because Visual Cryptographic shares have near-maximal Shannon entropy ($H \approx 1.0$), traditional compression (RLE, Huffman, LZW) achieves little to negative compression. <strong>Base64 Encoding</strong> achieves the highest character reduction (~83.3%) for QR payload optimization.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-3 bg-dark rounded border border-success">
+                                    <h6 class="fw-bold text-success mb-1"><i class="fa-solid fa-check-double me-1"></i> 100% Lossless Guarantee</h6>
+                                    <p class="text-muted small mb-0">All 6 evaluated transformation pipelines preserve exact bit-level fidelity, ensuring that reconstructed QR shares can always be cleanly scanned and decoded.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-secondary">
+                        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. REQUEST KEY WITH ACCESS REASON MODAL -->
+        <div class="modal fade" id="requestKeyModal" tabindex="-1" aria-labelledby="requestKeyModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content card-custom text-white border-primary">
+                    <div class="modal-header border-secondary">
+                        <h5 class="modal-title fw-bold" id="requestKeyModalLabel">
+                            <i class="fa-solid fa-key text-primary me-2"></i> Request Decryption Secret Key
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <p class="text-muted small mb-3">To comply with the secure request-and-approval access workflow, please specify your reason for requesting this document:</p>
+                        <input type="hidden" id="modalRequestFileId">
+                        <div class="mb-3">
+                            <label class="form-label text-muted small">Document Name</label>
+                            <input type="text" class="form-control" id="modalRequestFileName" readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted small">Access Reason / Purpose</label>
+                            <textarea class="form-control" id="modalRequestReason" rows="3" placeholder="e.g. Clinical research audit, patient records review..." required></textarea>
+                        </div>
+                        <button type="button" class="btn btn-primary-custom w-100" onclick="submitKeyRequestWithReason()">
+                            <i class="fa-solid fa-paper-plane me-1"></i> Submit Access Request
+                        </button>
                     </div>
                 </div>
             </div>

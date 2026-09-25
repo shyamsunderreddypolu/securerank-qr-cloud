@@ -22,6 +22,7 @@ public class KeyRequestResponse {
     private String consumerName;
     private String consumerEmail;
     private RequestStatus status;
+    private String accessReason;
     private String masterKey; // Included only if status is APPROVED and caller is consumer
     private LocalDateTime requestedAt;
     private LocalDateTime approvedAt;

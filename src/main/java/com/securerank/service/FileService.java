@@ -17,11 +17,15 @@ public interface FileService {
 
     List<SearchResultResponse> searchFiles(String query, String consumerEmail);
 
-    ApiResponse requestFileKey(Long fileId, String consumerEmail);
+    ApiResponse requestFileKey(Long fileId, String consumerEmail, String accessReason);
 
     List<KeyRequestResponse> getMyKeyRequests(String consumerEmail);
 
     byte[] downloadAndDecryptFile(Long fileId, String userEmail);
 
     UploadedFile getFileById(Long fileId);
+
+    com.securerank.dto.response.QRVisualCryptoResponse getQRVisualCryptoDetails(Long fileId);
+
+    com.securerank.dto.response.BenchmarkReportResponse getLosslessBenchmark(Long fileId);
 }

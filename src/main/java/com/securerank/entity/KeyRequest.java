@@ -33,6 +33,9 @@ public class KeyRequest {
     @Builder.Default
     private RequestStatus status = RequestStatus.PENDING;
 
+    @Column(length = 500)
+    private String accessReason;
+
     private LocalDateTime requestedAt;
 
     private LocalDateTime approvedAt;

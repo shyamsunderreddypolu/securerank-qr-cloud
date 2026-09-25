@@ -1,15 +1,14 @@
 package com.securerank.service.impl;
 
-import com.securerank.dto.response.ApiResponse;
-import com.securerank.dto.response.FileMetadataResponse;
-import com.securerank.dto.response.KeyRequestResponse;
-import com.securerank.dto.response.SearchResultResponse;
+import com.securerank.dto.response.*;
 import com.securerank.entity.*;
 import com.securerank.repository.FileKeyRepository;
 import com.securerank.repository.KeyRequestRepository;
 import com.securerank.repository.UploadedFileRepository;
 import com.securerank.repository.UserRepository;
 import com.securerank.service.FileService;
+import com.securerank.service.LosslessTransformationService;
+import com.securerank.service.QRVisualCryptoService;
 import com.securerank.util.AESCryptoUtils;
 import com.securerank.util.TFIDFUtils;
 import lombok.RequiredArgsConstructor;
@@ -19,9 +18,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
+import javax.imageio.ImageIO;
 
 @Service
 @RequiredArgsConstructor
@@ -34,6 +36,8 @@ public class FileServiceImpl implements FileService {
     private final UserRepository userRepository;
     private final AESCryptoUtils aesCryptoUtils;
     private final TFIDFUtils tfidfUtils;
+    private final QRVisualCryptoService qrVisualCryptoService;
+    private final LosslessTransformationService losslessTransformationService;
 
     @Override
     @Transactional
@@ -55,6 +59,19 @@ public class FileServiceImpl implements FileService {
             String indexVector = tfidfUtils.buildIndexVector(textContent, keywords);
             String trapdoorKey = aesCryptoUtils.generateTrapdoor(keywords != null && !keywords.isEmpty() ? keywords : file.getOriginalFilename());
 
+            // 1. Generate QR Code containing secure file metadata
+            String qrPayload = String.format("{\"file\":\"%s\",\"label\":\"%s\",\"owner\":\"%s\",\"trapdoor\":\"%s\"}",
+                    file.getOriginalFilename(), label != null ? label : "", ownerEmail, trapdoorKey);
+            BufferedImage qrImage = qrVisualCryptoService.generateQRCode(qrPayload, 128, 128);
+            String qrCodeBase64 = qrVisualCryptoService.imageToBase64DataUri(qrImage);
+
+            // 2. Generate 2-out-of-2 Visual Cryptography Shares
+            Map<String, Object> vcShares = qrVisualCryptoService.generateVisualCryptoShares(qrImage);
+            String share1Base64 = (String) vcShares.get("share1Base64");
+            String share2Base64 = (String) vcShares.get("share2Base64");
+            String bitStream = (String) vcShares.get("bitStream");
+            int bitStreamLen = (Integer) vcShares.get("bitStreamLength");
+
             UploadedFile uploadedFile = UploadedFile.builder()
                     .filename(file.getOriginalFilename())
                     .label(label)
@@ -64,6 +81,11 @@ public class FileServiceImpl implements FileService {
                     .encryptedSummary(keywords)
                     .indexVector(indexVector)
                     .trapdoorKey(trapdoorKey)
+                    .qrCodeBase64(qrCodeBase64)
+                    .vcShare1Base64(share1Base64)
+                    .vcShare2Base64(share2Base64)
+                    .bitStreamLength(bitStreamLen)
+                    .binaryBitStream(bitStream)
                     .owner(owner)
                     .build();
 
@@ -75,14 +97,15 @@ public class FileServiceImpl implements FileService {
                     .build();
             fileKeyRepository.save(fileKey);
 
-            log.info("Uploaded and encrypted file: {} (ID: {}) for owner: {}", savedFile.getFilename(), savedFile.getId(), ownerEmail);
+            log.info("Uploaded and encrypted file: {} (ID: {}) with QR and (2,2) Visual Cryptography for owner: {}",
+                    savedFile.getFilename(), savedFile.getId(), ownerEmail);
 
             return ApiResponse.builder()
                     .success(true)
-                    .message("File uploaded, encrypted with AES-256, and indexed successfully!")
+                    .message("File uploaded, encrypted with AES-256, QR code & Visual Cryptography shares generated successfully!")
                     .build();
         } catch (Exception e) {
-            log.error("File upload failed: {}", e.getMessage());
+            log.error("File upload failed: {}", e.getMessage(), e);
             return ApiResponse.builder()
                     .success(false)
                     .message("Upload failed: " + e.getMessage())
@@ -167,7 +190,7 @@ public class FileServiceImpl implements FileService {
 
     @Override
     @Transactional
-    public ApiResponse requestFileKey(Long fileId, String consumerEmail) {
+    public ApiResponse requestFileKey(Long fileId, String consumerEmail, String accessReason) {
         User consumer = userRepository.findByEmail(consumerEmail)
                 .orElseThrow(() -> new RuntimeException("Consumer not found: " + consumerEmail));
 
@@ -191,13 +214,16 @@ public class FileServiceImpl implements FileService {
                 .build());
 
         request.setStatus(RequestStatus.PENDING);
+        request.setAccessReason(accessReason != null && !accessReason.trim().isEmpty()
+                ? accessReason.trim()
+                : "Secure document review & evaluation");
         keyRequestRepository.save(request);
 
-        log.info("Consumer {} requested key for file ID {}", consumerEmail, fileId);
+        log.info("Consumer {} requested key for file ID {} with reason: {}", consumerEmail, fileId, request.getAccessReason());
 
         return ApiResponse.builder()
                 .success(true)
-                .message("Key request submitted to Admin successfully!")
+                .message("Key request submitted to Admin successfully with access reason!")
                 .build();
     }
 
@@ -226,6 +252,7 @@ public class FileServiceImpl implements FileService {
                             .consumerName(req.getConsumer().getName())
                             .consumerEmail(req.getConsumer().getEmail())
                             .status(req.getStatus())
+                            .accessReason(req.getAccessReason())
                             .masterKey(masterKey)
                             .requestedAt(req.getRequestedAt())
                             .approvedAt(req.getApprovedAt())
@@ -267,5 +294,85 @@ public class FileServiceImpl implements FileService {
     public UploadedFile getFileById(Long fileId) {
         return uploadedFileRepository.findById(fileId)
                 .orElseThrow(() -> new RuntimeException("File not found with ID: " + fileId));
+    }
+
+    @Override
+    @Transactional
+    public QRVisualCryptoResponse getQRVisualCryptoDetails(Long fileId) {
+        UploadedFile file = uploadedFileRepository.findById(fileId)
+                .orElseThrow(() -> new RuntimeException("File not found with ID: " + fileId));
+
+        String qrCode = file.getQrCodeBase64();
+        String share1 = file.getVcShare1Base64();
+        String share2 = file.getVcShare2Base64();
+        String bitStream = file.getBinaryBitStream();
+
+        // If previously uploaded file without QR/VC, generate on-the-fly and save
+        if (qrCode == null || share1 == null || share2 == null || bitStream == null) {
+            String qrPayload = String.format("{\"fileId\":%d,\"name\":\"%s\",\"owner\":\"%s\"}",
+                    file.getId(), file.getFilename(), file.getOwner().getEmail());
+            BufferedImage qrImg = qrVisualCryptoService.generateQRCode(qrPayload, 128, 128);
+            qrCode = qrVisualCryptoService.imageToBase64DataUri(qrImg);
+
+            Map<String, Object> vcShares = qrVisualCryptoService.generateVisualCryptoShares(qrImg);
+            share1 = (String) vcShares.get("share1Base64");
+            share2 = (String) vcShares.get("share2Base64");
+            bitStream = (String) vcShares.get("bitStream");
+            int bitLen = (Integer) vcShares.get("bitStreamLength");
+
+            file.setQrCodeBase64(qrCode);
+            file.setVcShare1Base64(share1);
+            file.setVcShare2Base64(share2);
+            file.setBinaryBitStream(bitStream);
+            file.setBitStreamLength(bitLen);
+            uploadedFileRepository.save(file);
+        }
+
+        // Superimpose Share 1 and Share 2 to generate reconstructed image
+        String superimposedBase64 = "";
+        try {
+            byte[] s1Bytes = Base64.getDecoder().decode(share1.replace("data:image/png;base64,", ""));
+            byte[] s2Bytes = Base64.getDecoder().decode(share2.replace("data:image/png;base64,", ""));
+            BufferedImage s1Img = ImageIO.read(new ByteArrayInputStream(s1Bytes));
+            BufferedImage s2Img = ImageIO.read(new ByteArrayInputStream(s2Bytes));
+            BufferedImage superimposed = qrVisualCryptoService.superimposeShares(s1Img, s2Img);
+            superimposedBase64 = qrVisualCryptoService.imageToBase64DataUri(superimposed);
+        } catch (Exception e) {
+            log.warn("Could not superimpose shares: {}", e.getMessage());
+            superimposedBase64 = qrCode;
+        }
+
+        double entropy = losslessTransformationService.calculateShannonEntropy(bitStream);
+        String preview = bitStream.length() > 100 ? bitStream.substring(0, 100) + "..." : bitStream;
+
+        return QRVisualCryptoResponse.builder()
+                .fileId(file.getId())
+                .filename(file.getFilename())
+                .label(file.getLabel())
+                .ownerEmail(file.getOwner().getEmail())
+                .qrCodeBase64(qrCode)
+                .vcShare1Base64(share1)
+                .vcShare2Base64(share2)
+                .superimposedQRBase64(superimposedBase64)
+                .bitStreamLength(bitStream.length())
+                .bitStreamPreview(preview)
+                .shannonEntropy(entropy)
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public BenchmarkReportResponse getLosslessBenchmark(Long fileId) {
+        UploadedFile file = uploadedFileRepository.findById(fileId)
+                .orElseThrow(() -> new RuntimeException("File not found with ID: " + fileId));
+
+        String bitStream = file.getBinaryBitStream();
+        if (bitStream == null || bitStream.isEmpty()) {
+            getQRVisualCryptoDetails(fileId);
+            file = uploadedFileRepository.findById(fileId).orElse(file);
+            bitStream = file.getBinaryBitStream();
+        }
+
+        return losslessTransformationService.runFullBenchmark(file.getId(), file.getFilename(), bitStream);
     }
 }

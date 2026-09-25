@@ -59,9 +59,11 @@ public class FileController {
     @PreAuthorize("hasAuthority('ROLE_CONSUMER') or hasAuthority('ROLE_ADMIN')")
     public ResponseEntity<ApiResponse> requestFileKey(
             @PathVariable("fileId") Long fileId,
+            @RequestBody(required = false) com.securerank.dto.request.KeyRequestDTO requestDto,
             Authentication authentication) {
         String consumerEmail = authentication.getName();
-        ApiResponse response = fileService.requestFileKey(fileId, consumerEmail);
+        String reason = requestDto != null ? requestDto.getReason() : null;
+        ApiResponse response = fileService.requestFileKey(fileId, consumerEmail, reason);
         return ResponseEntity.ok(response);
     }
 
@@ -87,5 +89,17 @@ public class FileController {
                 .contentType(MediaType.parseMediaType(mediaType))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getFilename() + "\"")
                 .body(decryptedBytes);
+    }
+
+    @GetMapping("/{fileId}/qr-vc")
+    public ResponseEntity<com.securerank.dto.response.QRVisualCryptoResponse> getQRVisualCryptoDetails(
+            @PathVariable("fileId") Long fileId) {
+        return ResponseEntity.ok(fileService.getQRVisualCryptoDetails(fileId));
+    }
+
+    @GetMapping("/{fileId}/benchmark")
+    public ResponseEntity<com.securerank.dto.response.BenchmarkReportResponse> getLosslessBenchmark(
+            @PathVariable("fileId") Long fileId) {
+        return ResponseEntity.ok(fileService.getLosslessBenchmark(fileId));
     }
 }
