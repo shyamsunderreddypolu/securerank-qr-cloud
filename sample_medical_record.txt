@@ -1,0 +1,5 @@
+Patient Medical Record
+Patient Name: Jane Doe
+Diagnosis: Cardiovascular health and diabetes type 2 evaluation
+Clinical Summary: Regular blood sugar monitoring, cardiac wellness checkup, and dietary management.
+Confidential medical document encrypted with AES-256-CBC.
