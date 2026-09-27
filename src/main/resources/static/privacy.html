@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Notice [Draft] — SecureRank</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+  <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center gap-2" href="/index.html">
+        <i class="fa-solid fa-shield-halved brand-icon fs-5"></i>
+        <span>SecureRank</span>
+      </a>
+      <a href="/index.html" class="btn btn-outline-secondary btn-sm">
+        <i class="fa-solid fa-arrow-left me-1"></i> Return to Application
+      </a>
+    </div>
+  </nav>
+
+  <main class="container my-5 flex-grow-1" style="max-width: 800px;">
+    <div class="card card-custom p-4 p-md-5">
+      <div class="badge bg-secondary mb-3 d-inline-block" style="width: fit-content;">DRAFT DOCUMENTATION</div>
+      <h2 class="fw-bold mb-4">Privacy Notice</h2>
+      <p class="text-secondary small mb-4">Last Updated: September 2026</p>
+
+      <div class="mb-4">
+        <h5 class="fw-bold text-white mb-2">1. Data Architecture & Encryption</h5>
+        <p class="text-secondary">SecureRank is engineered to process encrypted cloud document storage and multi-keyword search. Files uploaded by Data Owners are encrypted using standard AES-256-CBC cipher suites before storage. Plaintext document contents are never stored unencrypted on the cloud server.</p>
+      </div>
+
+      <div class="mb-4">
+        <h5 class="fw-bold text-white mb-2">2. Search Index Vectors</h5>
+        <p class="text-secondary">Search operations evaluate TF-IDF keyword vector representations. Search queries submitted by authorized Data Consumers match against these vectors without requiring the cloud server to decrypt stored documents.</p>
+      </div>
+
+      <div class="mb-4">
+        <h5 class="fw-bold text-white mb-2">3. Visual Cryptography & Key Distribution</h5>
+        <p class="text-secondary">QR code authentication tokens are split into two visual cryptographic shares: one stored in encrypted form on the server, and one retained by the client. Document decryption requires an approved Secret Decryption Key managed by the Private Key Generator (PKG) / Administrator role.</p>
+      </div>
+
+      <div class="mb-4">
+        <h5 class="fw-bold text-white mb-2">4. User Account Information</h5>
+        <p class="text-secondary">Registration requires name, email address, password hash, and designated system role (Data Owner or Data Consumer). Passwords are cryptographically hashed using BCrypt. Session management uses JSON Web Tokens (JWT).</p>
+      </div>
+
+      <hr class="border-secondary my-4">
+      <div class="text-muted small">
+        This document represents an architectural privacy specification for the SecureRank system implementation.
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer-custom">
+    <div class="container text-center text-muted small">
+      SecureRank &bull; Secure Ranked Multi-Keyword Search System
+    </div>
+  </footer>
+</body>
+
+</html>
